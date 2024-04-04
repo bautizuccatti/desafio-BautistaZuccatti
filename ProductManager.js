@@ -1,36 +1,32 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 
 class ProductManager {
-    constructor(filePath) {
-        this.path = filePath;
+    constructor() {
+        this.filePath = 'products.json';
         this.products = [];
         this.productIdCounter = 1;
         this.loadProducts();
     }
 
-    loadProducts() {
+    async loadProducts() {
         try {
-            const data = fs.readFileSync(this.path, 'utf8');
+            const data = await fs.readFile(this.filePath, 'utf-8');
             this.products = JSON.parse(data);
-            if (this.products.length > 0) {
-                const lastProduct = this.products[this.products.length - 1];
-                this.productIdCounter = lastProduct.id + 1;
-            }
-        } catch (err) {
-            console.error("Error al cargar los productos:", err.message);
+            this.productIdCounter = this.products.reduce((maxId, product) => Math.max(maxId, product.id), 0) + 1;
+        } catch (error) {
+            console.error("Error al cargar productos:", error);
         }
     }
 
-    saveProducts() {
+    async saveProducts() {
         try {
-            fs.writeFileSync(this.path, JSON.stringify(this.products, null, 2));
-        } catch (err) {
-            console.error("Error al guardar los productos:", err.message);
+            await fs.writeFile(this.filePath, JSON.stringify(this.products, null, 2));
+        } catch (error) {
+            console.error("Error al guardar productos:", error);
         }
     }
 
-    addProduct(productData) {
-        const { title, description, price, thumbnail, code, stock } = productData;
+    async addProduct(title, description, price, thumbnail, code, stock) {
         if (!title || !description || !price || !thumbnail || !code || !stock) {
             console.error("Todos los campos son obligatorios.");
             return;
@@ -52,7 +48,7 @@ class ProductManager {
             stock
         };
         this.products.push(newProduct);
-        this.saveProducts();
+        await this.saveProducts();
         console.log("Producto añadido correctamente:", newProduct);
     }
 
@@ -68,56 +64,17 @@ class ProductManager {
             console.error("Producto no encontrado.");
         }
     }
-
-    updateProduct(id, updatedFields) {
-        const index = this.products.findIndex(product => product.id === id);
-        if (index !== -1) {
-            this.products[index] = { ...this.products[index], ...updatedFields };
-            this.saveProducts();
-            console.log("Producto actualizado correctamente.");
-        } else {
-            console.error("Producto no encontrado.");
-        }
-    }
-
-    deleteProduct(id) {
-        const index = this.products.findIndex(product => product.id === id);
-        if (index !== -1) {
-            this.products.splice(index, 1);
-            this.saveProducts();
-            console.log("Producto eliminado correctamente.");
-        } else {
-            console.error("Producto no encontrado.");
-        }
-    }
 }
 
-const manager = new ProductManager('productos.json');
 
-manager.addProduct({
-    title: "Producto 1",
-    description: "Descripción del producto 1",
-    price: 10,
-    thumbnail: "ruta1",
-    code: "ABC123",
-    stock: 20
-});
-manager.addProduct({
-    title: "Producto 2",
-    description: "Descripción del producto 2",
-    price: 20,
-    thumbnail: "ruta2",
-    code: "DEF456",
-    stock: 15
-});
+(async () => {
+    const manager = new ProductManager();
 
-console.log(manager.getProducts());
+    await manager.addProduct("Producto 1", "Descripción del producto 1", 10, "ruta1", "ABC123", 20);
+    await manager.addProduct("Producto 2", "Descripción del producto 2", 20, "ruta2", "DEF456", 15);
 
-console.log(manager.getProductById(1));
-console.log(manager.getProductById(3));
+    console.log(manager.getProducts());
 
-manager.updateProduct(1, { price: 15, stock: 25 });
-console.log(manager.getProducts());
-
-manager.deleteProduct(2);
-console.log(manager.getProducts());
+    console.log(manager.getProductById(1));
+    console.log(manager.getProductById(3)); 
+})();
