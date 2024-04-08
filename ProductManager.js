@@ -1,8 +1,8 @@
 const fs = require('fs').promises;
 
 class ProductManager {
-    constructor() {
-        this.filePath = 'products.json';
+    constructor(filePath) {
+        this.filePath = filePath;
         this.products = [];
         this.productIdCounter = 1;
         this.loadProducts();
@@ -27,17 +27,20 @@ class ProductManager {
     }
 
     async addProduct(title, description, price, thumbnail, code, stock) {
+        // Validar que todos los campos sean proporcionados
         if (!title || !description || !price || !thumbnail || !code || !stock) {
             console.error("Todos los campos son obligatorios.");
             return;
         }
 
+        
         const existingProduct = this.products.find(product => product.code === code);
         if (existingProduct) {
             console.error("Ya existe un producto con el mismo código.");
             return;
         }
 
+        
         const newProduct = {
             id: this.productIdCounter++,
             title,
@@ -49,7 +52,34 @@ class ProductManager {
         };
         this.products.push(newProduct);
         await this.saveProducts();
-        console.log("Producto añadido correctamente:", newProduct);
+    }
+
+    async updateProduct(id, title, description, price, thumbnail, code, stock) {
+        const index = this.products.findIndex(product => product.id === id);
+        if (index === -1) {
+            console.error("Producto no encontrado.");
+            return;
+        }
+
+        const updatedProduct = {
+            ...this.products[index],
+            title,
+            description,
+            price,
+            thumbnail,
+            code,
+            stock
+        };
+
+        
+        const codeAlreadyExists = this.products.some(product => product.code === code && product.id !== id);
+        if (codeAlreadyExists) {
+            console.error("Ya existe un producto con el mismo código.");
+            return;
+        }
+
+        this.products[index] = updatedProduct;
+        await this.saveProducts();
     }
 
     getProducts() {
@@ -68,11 +98,14 @@ class ProductManager {
 
 
 (async () => {
-    const manager = new ProductManager();
+    const manager = new ProductManager('products.json');
 
     await manager.addProduct("Producto 1", "Descripción del producto 1", 10, "ruta1", "ABC123", 20);
     await manager.addProduct("Producto 2", "Descripción del producto 2", 20, "ruta2", "DEF456", 15);
 
+    console.log(manager.getProducts());
+
+    await manager.updateProduct(1, "Producto Actualizado", "Nueva descripción", 15, "nuevaRuta", "ABC123", 30);
     console.log(manager.getProducts());
 
     console.log(manager.getProductById(1));
