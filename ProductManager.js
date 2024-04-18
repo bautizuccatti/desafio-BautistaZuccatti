@@ -1,3 +1,4 @@
+const express = require('express');
 const fs = require('fs').promises;
 
 class ProductManager {
@@ -33,14 +34,12 @@ class ProductManager {
             return;
         }
 
-        
         const existingProduct = this.products.find(product => product.code === code);
         if (existingProduct) {
             console.error("Ya existe un producto con el mismo código.");
             return;
         }
 
-        
         const newProduct = {
             id: this.productIdCounter++,
             title,
@@ -71,7 +70,6 @@ class ProductManager {
             stock
         };
 
-        
         const codeAlreadyExists = this.products.some(product => product.code === code && product.id !== id);
         if (codeAlreadyExists) {
             console.error("Ya existe un producto con el mismo código.");
@@ -82,8 +80,12 @@ class ProductManager {
         await this.saveProducts();
     }
 
-    getProducts() {
-        return this.products;
+    getProducts(limit) {
+        if (limit) {
+            return this.products.slice(0, limit);
+        } else {
+            return this.products;
+        }
     }
 
     getProductById(id) {
@@ -96,18 +98,27 @@ class ProductManager {
     }
 }
 
+const app = express();
+const port = 3000;
 
-(async () => {
-    const manager = new ProductManager('products.json');
+const manager = new ProductManager('products.json');
 
-    await manager.addProduct("Producto 1", "Descripción del producto 1", 10, "ruta1", "ABC123", 20);
-    await manager.addProduct("Producto 2", "Descripción del producto 2", 20, "ruta2", "DEF456", 15);
+app.get('/products', (req, res) => {
+    const limit = req.query.limit ? parseInt(req.query.limit) : null;
+    const products = manager.getProducts(limit);
+    res.json({ products });
+});
 
-    console.log(manager.getProducts());
+app.get('/products/:pid', (req, res) => {
+    const productId = parseInt(req.params.pid);
+    const product = manager.getProductById(productId);
+    if (product) {
+        res.json({ product });
+    } else {
+        res.status(404).json({ error: 'Producto no encontrado' });
+    }
+});
 
-    await manager.updateProduct(1, "Producto Actualizado", "Nueva descripción", 15, "nuevaRuta", "ABC123", 30);
-    console.log(manager.getProducts());
-
-    console.log(manager.getProductById(1));
-    console.log(manager.getProductById(3)); 
-})();
+app.listen(port, () => {
+    console.log(`Servidor escuchando en http://localhost:${port}`);
+});
