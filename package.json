@@ -1,0 +1,12 @@
+{
+    "name": "desafio-bautista-zuccatti",
+    "version": "1.0.0",
+    "description": "Una aplicación para gestionar productos",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "dependencies": {
+      "express": "^4.17.1"
+    }
+  }

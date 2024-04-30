@@ -1,4 +1,4 @@
-const express = require('express');
+// Archivo: productManager.js
 const fs = require('fs').promises;
 
 class ProductManager {
@@ -98,27 +98,4 @@ class ProductManager {
     }
 }
 
-const app = express();
-const port = 3000;
-
-const manager = new ProductManager('products.json');
-
-app.get('/products', (req, res) => {
-    const limit = req.query.limit ? parseInt(req.query.limit) : null;
-    const products = manager.getProducts(limit);
-    res.json({ products });
-});
-
-app.get('/products/:pid', (req, res) => {
-    const productId = parseInt(req.params.pid);
-    const product = manager.getProductById(productId);
-    if (product) {
-        res.json({ product });
-    } else {
-        res.status(404).json({ error: 'Producto no encontrado' });
-    }
-});
-
-app.listen(port, () => {
-    console.log(`Servidor escuchando en http://localhost:${port}`);
-});
+module.exports = ProductManager;
