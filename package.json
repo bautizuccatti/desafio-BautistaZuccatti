@@ -4,9 +4,11 @@
     "description": "Una aplicación para gestionar productos",
     "main": "server.js",
     "scripts": {
-      "start": "node server.js"
+        "start": "node server.js"
     },
     "dependencies": {
-      "express": "^4.17.1"
+        "express": "^4.19.2",
+        "handlebars": "^4.7.8",
+        "socket.io": "^4.7.5"
     }
-  }
+}

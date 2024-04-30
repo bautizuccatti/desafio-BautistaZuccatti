@@ -1,36 +1,48 @@
-// Archivo: server.js
 const express = require('express');
-const ProductManager = require('productManager');
+const exphbs = require('express-handlebars');
+const http = require('http');
+const socketIO = require('socket.io');
+const ProductManager = require('./ProductManager');
 
 const app = express();
-const port = 3000;
+const server = http.createServer(app);
+const io = socketIO(server);
 
-const manager = new ProductManager('products.json');
 
-app.get('/products', async (req, res) => {
-    try {
-        const limit = req.query.limit ? parseInt(req.query.limit) : null;
-        const products = manager.getProducts(limit);
-        res.json({ products });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener los productos' });
-    }
+app.engine('handlebars', exphbs());
+app.set('view engine', 'handlebars');
+
+
+io.on('connection', (socket) => {
+    console.log('Nuevo cliente conectado');
+
+    socket.on('createProduct', (product) => {        
+        console.log('Producto creado:', product);
+        io.emit('updateProducts', product);
+    });
+
+   
+    socket.on('deleteProduct', (productId) => {
+        console.log('Producto eliminado:', productId);
+        io.emit('updateProducts');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado');
+    });
 });
 
-app.get('/products/:pid', async (req, res) => {
-    try {
-        const productId = parseInt(req.params.pid);
-        const product = manager.getProductById(productId);
-        if (product) {
-            res.json({ product });
-        } else {
-            res.status(404).json({ error: 'Producto no encontrado' });
-        }
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener el producto' });
-    }
+
+app.get('/', (req, res) => {
+    res.render('home', { products: ProductManager });
 });
 
-app.listen(port, () => {
-    console.log(`Servidor escuchando en http://localhost:${port}`);
+app.get('/realtimeproducts', (req, res) => {
+    res.render('realTimeProducts', { products: ProductManager});
+});
+
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
